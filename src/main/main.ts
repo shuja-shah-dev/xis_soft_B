@@ -11,6 +11,7 @@
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
+import { spawn } from 'child_process';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
@@ -124,9 +125,38 @@ app.on('window-all-closed', () => {
   }
 });
 
+const startFlaskBackend = () => {
+  const backendPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'flask')
+    : path.join(__dirname, '../../flask');
+
+  const command = 'python app.py';
+
+  //  const backendPath = app.isPackaged
+  //    ? path.join(process.resourcesPath, 'flask/app')
+  //    : path.join(__dirname, '../../flask/app');
+  //  const executableName = 'app.exe';
+  //  const executablePath = path.join(backendPath, executableName);
+
+  const childProcess = spawn(command, [], {
+    cwd: backendPath,
+    shell: true,
+    stdio: 'inherit',
+  });
+
+  childProcess.on('error', (err) => {
+    console.error('Error starting Flask server:', err);
+  });
+
+  childProcess.on('exit', (code) => {
+    console.log('Flask server exited with code', code);
+  });
+};
+
 app
   .whenReady()
   .then(() => {
+    startFlaskBackend();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
