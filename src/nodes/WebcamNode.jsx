@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Handle, Position } from 'reactflow';
+import { useRef, useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { Handle, Position } from "reactflow";
 
 const WebcamInputNode = ({ data }) => {
   const videoRef = useRef(null);
@@ -19,7 +19,7 @@ const WebcamInputNode = ({ data }) => {
           data.onVideoUpload(stream);
         }
       } catch (error) {
-        console.error('Error accessing webcam:', error);
+        console.error("Error accessing webcam:", error);
       }
     };
 
