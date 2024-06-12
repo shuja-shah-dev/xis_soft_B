@@ -17,8 +17,7 @@ from scipy.ndimage import rotate as scipy_rotate
 app = Flask(__name__)
 CORS(app, origins=['*'])
 
-model = YOLO('./model.pt')
-model2 = YOLO('./yolov8n.pt')
+
 
 def rotation(image):
     model = load_model('orientation_model.h5')
