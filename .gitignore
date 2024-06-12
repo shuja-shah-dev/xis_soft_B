@@ -1,4 +1,5 @@
-*.pt
+/flask/*.h5
+/flask/*.pt
 
 # Logs
 logs
