@@ -1,0 +1,12 @@
+ultralytics
+pillow
+Flask
+opencv-python
+flask-cors
+anomalib==0.7.0
+lightning
+kornia
+imgaug
+scikit-learn
+tensorflow
+openvino

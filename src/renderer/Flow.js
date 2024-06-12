@@ -8,8 +8,6 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import axios from 'axios';
-import PropTypes from 'prop-types';
-
 import ImageInputNode from '../nodes/ImageInputNode';
 
 import Switcher from '../nodes/Switcher';
@@ -75,71 +73,67 @@ function Flow({ projectType }) {
           data: { detectedImage: null },
         },
       ];
-    // eslint-disable-next-line no-else-return
-    } else {
-      return [
-        {
-          id: '0',
-          data: {},
-          position: { x: 450, y: 20 },
-          type: 'nodeSelector',
-        },
-        {
-          id: '1',
-          type: 'imageInput',
-          position: { x: 100, y: 70 },
-          data: { onImageUpload: (image) => handleImageUpload(image) },
-        },
-        {
-          id: '2',
-          type: 'modelProvider',
-          position: { x: 700, y: 100 },
-          data: {
-            image: null,
-            name: 'Detection',
-            code: 'Od',
-          },
-        },
-        {
-          id: '3',
-          type: 'switcher',
-          position: { x: 1200, y: 90 },
-          data: { detectedImage: null },
-        },
-        {
-          id: '4',
-          type: 'orientation',
-          position: { x: 1700, y: 115 },
-          data: { detectedImage: null },
-        },
-        {
-          id: '5',
-          type: 'modelProvider',
-          position: { x: 2200, y: 65 },
-          data: {
-            image: null,
-            name: 'Anomaly Detection',
-            code: 'Ad',
-          },
-        },
-        {
-          id: '6',
-          type: 'outputNode',
-          position: { x: 2700, y: 115 },
-          data: { detectedImage: null },
-        },
-      ];
     }
+    return [
+
+      {
+        id: '1',
+        type: 'imageInput',
+        position: { x: 100, y: 70 },
+        data: { onImageUpload: (image) => handleImageUpload(image) },
+      },
+      {
+        id: '2',
+        type: 'modelProvider',
+        position: { x: 700, y: 100 },
+        data: {
+          image: null,
+          name: 'Detection',
+          code: 'Od',
+        },
+      },
+
+      {
+        id: '3',
+        type: 'orientation',
+        position: { x: 1200, y: 130 },
+
+        data: { detectedImage: null },
+      },
+      {
+        id: '4',
+        type: 'switcher',
+        position: { x: 1700, y: 100 },
+        data: { detectedImage: null },
+      },
+      {
+        id: '5',
+        type: 'modelProvider',
+        position: { x: 2200, y: 100 },
+        data: {
+          image: null,
+          name: 'Anomaly Detection',
+          code: 'Ad',
+        },
+      },
+      {
+        id: '6',
+        type: 'outputNode',
+        position: { x: 2700, y: 115 },
+        data: { detectedImage: null },
+      },
+    ];
   });
 
   const [edges, setEdges] = useState([]);
   const [result, setResult] = useState(null);
-  const [anomalyResult, setAnomalyResult] = useState(null);
+  const [finalResult, setFinalResult] = useState(null);
   const [inputImage, setInputImage] = useState(null);
   const [shouldTriggerRequest, setShouldTriggerRequest] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState(null);
-  const frameCaptureInterval = useRef(null);
+  const [values, setValues] = useState(null);
 
+  const frameCaptureInterval = useRef(null);
   const updateOutputNodeEdges = useCallback((newEdges) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -185,21 +179,35 @@ function Flow({ projectType }) {
 
         if (
           sourceNode.type === 'imageInput' &&
-          (targetNode.data.code === 'Od' || targetNode.type === 'detect')
+          (targetNode.data.code === 'Od')
         ) {
-          // const n = nodes.find((node) => node.id === "2");
-          // const image = n?.data.image;
-          // console.log(inputImage)
-          // triggerBackendRequest(inputImage);
+
           setShouldTriggerRequest(true);
           setCurrentNodeId(params.target);
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          (targetNode.type === 'orientation' )
+        ) {
+
+          rotateImage(inputImage, targetNode.id);
+
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          (targetNode.data.code === 'Ad' )
+        ) {
+
+          triggerBackendAnomalyRequest(inputImage, targetNode.id);
+
         }
 
         if (
           (sourceNode.data.code === 'Od' || sourceNode.type === 'detect') &&
           targetNode.type === 'switcher'
         ) {
-          // console.log(result);
           handleDetection(result, targetNode.id);
         }
 
@@ -207,8 +215,12 @@ function Flow({ projectType }) {
           (sourceNode.data.code === 'Od' || sourceNode.type === 'detect') &&
           targetNode.type === 'orientation'
         ) {
-          // console.log(result);
-          handleDetection(result, targetNode.id);
+          const image = sourceNode?.data.image;
+          urlToBlob(image).then((imageBlob) => {
+            if (imageBlob) {
+              rotateImage(imageBlob, targetNode.id);
+            }
+          });
         }
 
         if (
@@ -220,6 +232,13 @@ function Flow({ projectType }) {
 
         if (
           sourceNode.type === 'orientation' &&
+          targetNode.type === 'switcher'
+        ) {
+          handleDetection(result, targetNode.id);
+        }
+
+        if (
+          sourceNode.type === 'switcher' &&
           (targetNode.data.code === 'Ad' || targetNode.type === 'anomaly')
         ) {
           // const n = nodes.find((node) => node.id === "4");
@@ -237,12 +256,33 @@ function Flow({ projectType }) {
         }
 
         if (
+          (sourceNode.data.code === 'Od') &&
+          targetNode.type === 'outputNode'
+        ) {
+          // const n = nodes.find((node) => node.id === "5");
+          const image = sourceNode?.data.image;
+          setFinalResult(image);
+        }
+
+
+        if (
+          (sourceNode.type === 'orientation') &&
+          targetNode.type === 'outputNode'
+        ) {
+          // const n = nodes.find((node) => node.id === "5");
+          const image = sourceNode?.data.detectedImage;
+          setFinalResult(image);
+        }
+
+
+
+        if (
           (sourceNode.data.code === 'Ad' || sourceNode.type === 'anomaly') &&
           targetNode.type === 'outputNode'
         ) {
           // const n = nodes.find((node) => node.id === "5");
           const image = sourceNode?.data.image;
-          setAnomalyResult(image);
+          setFinalResult(image);
         }
 
         // if (params.source === '4' && params.target === '2') {
@@ -293,7 +333,7 @@ function Flow({ projectType }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === '2') {
-          node.data = { ...node.data, video: video };
+          node.data = { ...node.data, video };
         }
         return node;
       }),
@@ -304,7 +344,7 @@ function Flow({ projectType }) {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === nId) {
-          node.data = { ...node.data, detectedImage: detectedImage };
+          node.data = { ...node.data, detectedImage };
         }
         return node;
       }),
@@ -369,6 +409,7 @@ function Flow({ projectType }) {
           );
           const detectedImageUrl = URL.createObjectURL(detectedImageBlob);
           setResult(detectedImageUrl);
+          setValues(response.data.value);
           // console.log(currentNodeId)
           setNodes((nds) =>
             nds.map((node) => {
@@ -386,11 +427,45 @@ function Flow({ projectType }) {
     }
   };
 
-  const triggerBackendAnomalyRequest = (imageBlob, nodeId) => {
+  const rotateImage = (imageBlob, nodeId) => {
     if (imageBlob) {
       const formData = new FormData();
       formData.append('image', imageBlob, 'image.jpg');
+      axios
+        .post('http://localhost:5000/rotate', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        .then((response) => {
+          const rotatedImageBlob = base64ToBlob(
+            response.data.rotatedImage,
+            'image/jpeg',
+          );
+          const rotatedImageUrl = URL.createObjectURL(rotatedImageBlob);
 
+          setResult(rotatedImageUrl);
+          console.log('orientation fixed');
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === nodeId) {
+                node.data = { ...node.data, detectedImage: rotatedImageUrl };
+              }
+              return node;
+            }),
+          );
+        })
+        .catch((error) => {
+          console.error('There was an error in rotation!', error);
+        });
+    }
+  };
+
+  const triggerBackendAnomalyRequest = (imageBlob, nodeId) => {
+    if (imageBlob) {
+      const formData = new FormData();
+      formData.append('image', imageBlob);
+      formData.append('values', values);
       axios
         .post('http://localhost:5000/detectAnomaly', formData, {
           headers: {
@@ -457,13 +532,9 @@ function Flow({ projectType }) {
         </ReactFlow>
       </div>
 
-      <Footer image={anomalyResult} />
+      <Footer image={finalResult} />
     </>
   );
 }
-
-Flow.propTypes = {
-  projectType: PropTypes.number.isRequired,
-};
 
 export default Flow;
