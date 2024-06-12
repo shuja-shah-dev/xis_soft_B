@@ -17,6 +17,7 @@ import OutputNode from '../nodes/OutputNode';
 import Footer from './Footer';
 import NodeSelect from '../nodes/NodeSelect';
 import ModelProvider from '../nodes/modelProvider';
+import Modal from './Modal';
 // import WebcamInputNode from '../nodes/WebcamNode';
 
 const nodeTypes = {
@@ -132,6 +133,8 @@ function Flow({ projectType }) {
   const [shouldTriggerRequest, setShouldTriggerRequest] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState(null);
   const [values, setValues] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userInput, setUserInput] = useState("");
 
   const frameCaptureInterval = useRef(null);
   const updateOutputNodeEdges = useCallback((newEdges) => {
@@ -200,7 +203,7 @@ function Flow({ projectType }) {
           (targetNode.data.code === 'Ad' )
         ) {
 
-          triggerBackendAnomalyRequest(inputImage, targetNode.id);
+          triggerBackendAnomalyRequest(inputImage, targetNode.id, userInput);
 
         }
 
@@ -234,12 +237,13 @@ function Flow({ projectType }) {
           sourceNode.type === 'orientation' &&
           targetNode.type === 'switcher'
         ) {
+          setIsModalOpen(true);
           handleDetection(result, targetNode.id);
         }
 
         if (
           sourceNode.type === 'switcher' &&
-          (targetNode.data.code === 'Ad' || targetNode.type === 'anomaly')
+          (targetNode.data.code === 'Ad' )
         ) {
           // const n = nodes.find((node) => node.id === "4");
           const image = sourceNode?.data.detectedImage;
@@ -248,7 +252,7 @@ function Flow({ projectType }) {
           urlToBlob(image).then((imageBlob) => {
             if (imageBlob) {
               // console.log(imageBlob);
-              triggerBackendAnomalyRequest(imageBlob, targetNode.id);
+              triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
             } else {
               console.error('No image blob received');
             }
@@ -461,11 +465,12 @@ function Flow({ projectType }) {
     }
   };
 
-  const triggerBackendAnomalyRequest = (imageBlob, nodeId) => {
+  const triggerBackendAnomalyRequest = (imageBlob, nodeId, label) => {
     if (imageBlob) {
       const formData = new FormData();
       formData.append('image', imageBlob);
       formData.append('values', values);
+      formData.append('label', label);
       axios
         .post('http://localhost:5000/detectAnomaly', formData, {
           headers: {
@@ -508,6 +513,10 @@ function Flow({ projectType }) {
     [updateOutputNodeEdges],
   );
 
+  const handleModalSubmit = (input) => {
+    setUserInput(input);
+  };
+
   return (
     <>
       <div
@@ -533,6 +542,11 @@ function Flow({ projectType }) {
       </div>
 
       <Footer image={finalResult} />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleModalSubmit}
+      />
     </>
   );
 }

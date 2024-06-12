@@ -76,8 +76,8 @@ def classifier(image):
 
     return output, values
 
-def anomalib_inference(input_img, values):
-    if values == 1:
+def anomalib_inference(input_img, values, label):
+    if label == "front" or label == "Front":
         print("front")
         model_path = "bag_front_anomalib.pt"
 
@@ -99,7 +99,7 @@ def anomalib_inference(input_img, values):
         )
         inference_results = infer(train_args)
 
-    else:
+    elif label == "back" or label == "Back":
         print("back")
         model_path = "bag_back_anomalib.pt"
 
@@ -161,9 +161,10 @@ def detectAnomaly():
         print(image_file)
         input_img = image_file.read()
         values = int(request.form['values'])
+        label = request.form.get('label')
 
 
-        processed_image, results = anomalib_inference(input_img, values)
+        processed_image, results = anomalib_inference(input_img, values, label)
 
 
         return jsonify({'detectedImage': processed_image})
