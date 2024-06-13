@@ -1,3 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable promise/always-return */
+/* eslint-disable no-use-before-define */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   applyEdgeChanges,
@@ -8,6 +12,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import axios from 'axios';
+import PropTypes from 'prop-types';
 import ImageInputNode from '../nodes/ImageInputNode';
 
 import Switcher from '../nodes/Switcher';
@@ -76,7 +81,6 @@ function Flow({ projectType }) {
       ];
     }
     return [
-
       {
         id: '1',
         type: 'imageInput',
@@ -134,9 +138,9 @@ function Flow({ projectType }) {
   const [currentNodeId, setCurrentNodeId] = useState(null);
   const [values, setValues] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userInput, setUserInput] = useState("");
-
+  const [userInput, setUserInput] = useState('');
   const frameCaptureInterval = useRef(null);
+
   const updateOutputNodeEdges = useCallback((newEdges) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -161,189 +165,6 @@ function Flow({ projectType }) {
       });
   }
 
-  useEffect(() => {
-    if (shouldTriggerRequest && inputImage) {
-      triggerBackendRequest(inputImage);
-      setShouldTriggerRequest(false); // Reset the flag after triggering the request
-    }
-  }, [shouldTriggerRequest, inputImage]);
-
-  const onConnect = useCallback(
-    (params) => {
-      setEdges((prevEdges) => {
-        const newEdge = {
-          id: params.edgeId,
-          source: params.source,
-          target: params.target,
-        };
-
-        const targetNode = nodes.find((node) => node.id === params.target);
-        const sourceNode = nodes.find((node) => node.id === params.source);
-
-        if (
-          sourceNode.type === 'imageInput' &&
-          (targetNode.data.code === 'Od')
-        ) {
-
-          setShouldTriggerRequest(true);
-          setCurrentNodeId(params.target);
-        }
-
-        if (
-          sourceNode.type === 'imageInput' &&
-          (targetNode.type === 'orientation' )
-        ) {
-
-          rotateImage(inputImage, targetNode.id);
-
-        }
-
-        if (
-          sourceNode.type === 'imageInput' &&
-          (targetNode.data.code === 'Ad' )
-        ) {
-
-          triggerBackendAnomalyRequest(inputImage, targetNode.id, userInput);
-
-        }
-
-        if (
-          (sourceNode.data.code === 'Od' || sourceNode.type === 'detect') &&
-          targetNode.type === 'switcher'
-        ) {
-          handleDetection(result, targetNode.id);
-        }
-
-        if (
-          (sourceNode.data.code === 'Od' || sourceNode.type === 'detect') &&
-          targetNode.type === 'orientation'
-        ) {
-          const image = sourceNode?.data.image;
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              rotateImage(imageBlob, targetNode.id);
-            }
-          });
-        }
-
-        if (
-          sourceNode.type === 'switcher' &&
-          targetNode.type === 'orientation'
-        ) {
-          handleDetection(result, targetNode.id);
-        }
-
-        if (
-          sourceNode.type === 'orientation' &&
-          targetNode.type === 'switcher'
-        ) {
-          setIsModalOpen(true);
-          handleDetection(result, targetNode.id);
-        }
-
-        if (
-          sourceNode.type === 'switcher' &&
-          (targetNode.data.code === 'Ad' )
-        ) {
-          // const n = nodes.find((node) => node.id === "4");
-          const image = sourceNode?.data.detectedImage;
-
-          setCurrentNodeId(targetNode.id);
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              // console.log(imageBlob);
-              triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
-            } else {
-              console.error('No image blob received');
-            }
-          });
-        }
-
-        if (
-          (sourceNode.data.code === 'Od') &&
-          targetNode.type === 'outputNode'
-        ) {
-          // const n = nodes.find((node) => node.id === "5");
-          const image = sourceNode?.data.image;
-          setFinalResult(image);
-        }
-
-
-        if (
-          (sourceNode.type === 'orientation') &&
-          targetNode.type === 'outputNode'
-        ) {
-          // const n = nodes.find((node) => node.id === "5");
-          const image = sourceNode?.data.detectedImage;
-          setFinalResult(image);
-        }
-
-
-
-        if (
-          (sourceNode.data.code === 'Ad' || sourceNode.type === 'anomaly') &&
-          targetNode.type === 'outputNode'
-        ) {
-          // const n = nodes.find((node) => node.id === "5");
-          const image = sourceNode?.data.image;
-          setFinalResult(image);
-        }
-
-        // if (params.source === '4' && params.target === '2') {
-        //   const n = nodes.find((node) => node.id === '2');
-        //   const video = n?.data.video;
-        //   startFrameCapture(video);
-        // }
-
-        const newEdges = [...prevEdges, newEdge];
-        updateOutputNodeEdges(newEdges); // Update edges in the output node data
-        return newEdges;
-      });
-    },
-    [nodes, result, updateOutputNodeEdges],
-  );
-
-  useEffect(() => {
-    console.log(nodes);
-  }, [nodes]);
-
-  const handleImageUpload = (image) => {
-    setInputImage(image);
-    // setNodes((nds) =>
-    //   nds.map((node) => {
-    //     if (node.id === "2") {
-    //       node.data = { ...node.data, image: image };
-    //     }
-    //     return node;
-    //   })
-    // );
-  };
-
-  const handleProcessedFrame = (frame) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '3') {
-          node.data = {
-            ...node.data,
-            processedFrames: [...node.data.processedFrames, frame],
-          };
-        }
-        return node;
-      }),
-    );
-  };
-
-  const handleVideoUpload = (video) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '2') {
-          node.data = { ...node.data, video };
-        }
-        return node;
-      }),
-    );
-  };
-
   const handleDetection = (detectedImage, nId) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -355,48 +176,13 @@ function Flow({ projectType }) {
     );
   };
 
-  const startFrameCapture = (stream) => {
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    video.play();
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    frameCaptureInterval.current = setInterval(() => {
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        triggerBackendRequestVideo(blob);
-      }, 'image/jpeg');
-    }, 100); // Capture frame every 100ms
-  };
-
-  const triggerBackendRequestVideo = (frame) => {
-    if (frame) {
-      const formData = new FormData();
-      formData.append('frame', frame);
-
-      axios
-        .post('http://localhost:5000/detectVideo', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        .then((response) => {
-          const processedFrame = response.data.processed_frame;
-          handleProcessedFrame(processedFrame);
-        })
-        .catch((error) => {
-          console.error(
-            'There was an error detecting objects in video!',
-            error,
-          );
-        });
-    }
+  const handleImageUpload = (image) => {
+    setInputImage(image);
   };
 
   const triggerBackendRequest = (image) => {
     if (image) {
+      console.log(image);
       const formData = new FormData();
       formData.append('image', image);
 
@@ -467,6 +253,7 @@ function Flow({ projectType }) {
 
   const triggerBackendAnomalyRequest = (imageBlob, nodeId, label) => {
     if (imageBlob) {
+      console.log(imageBlob);
       const formData = new FormData();
       formData.append('image', imageBlob);
       formData.append('values', values);
@@ -499,6 +286,312 @@ function Flow({ projectType }) {
         });
     }
   };
+
+  useEffect(() => {
+    if (shouldTriggerRequest && inputImage) {
+      triggerBackendRequest(inputImage);
+      setShouldTriggerRequest(false);
+    }
+  }, [shouldTriggerRequest, inputImage, triggerBackendRequest]);
+
+  const onConnect = useCallback(
+    (params) => {
+      setEdges((prevEdges) => {
+        const newEdge = {
+          id: params.edgeId,
+          source: params.source,
+          target: params.target,
+        };
+
+        const targetNode = nodes.find((node) => node.id === params.target);
+        const sourceNode = nodes.find((node) => node.id === params.source);
+
+        if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Od') {
+          setShouldTriggerRequest(true);
+          setCurrentNodeId(params.target);
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          targetNode.type === 'outputNode'
+        ) {
+          const imageUrl = URL.createObjectURL(inputImage);
+          setFinalResult(imageUrl);
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          targetNode.type === 'orientation'
+        ) {
+          rotateImage(inputImage, targetNode.id);
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          targetNode.type === 'outputNode'
+        ) {
+          const imageUrl = URL.createObjectURL(inputImage);
+          setFinalResult(imageUrl);
+        }
+
+        if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Ad') {
+          if (values) {
+            if (userInput) {
+              const imageUrl = URL.createObjectURL(inputImage);
+              urlToBlob(imageUrl).then((imageBlob) => {
+                triggerBackendAnomalyRequest(
+                  imageBlob,
+                  targetNode.id,
+                  userInput,
+                );
+              });
+            } else {
+              alert('Kindly Connect to Switcher before Anomaly Detection');
+            }
+          } else {
+            alert('Perform Object Detection before Anomaly Detection');
+          }
+        }
+
+        if (
+          sourceNode.type === 'imageInput' &&
+          targetNode.type === 'switcher'
+        ) {
+          setIsModalOpen(true);
+          const imageUrl = URL.createObjectURL(inputImage);
+          handleDetection(imageUrl, targetNode.id);
+        }
+
+        if (
+          sourceNode.data.code === 'Od' &&
+          targetNode.type === 'orientation'
+        ) {
+          const image = sourceNode?.data.image;
+          urlToBlob(image).then((imageBlob) => {
+            if (imageBlob) {
+              rotateImage(imageBlob, targetNode.id);
+            }
+          });
+        }
+
+        if (sourceNode.data.code === 'Od' && targetNode.type === 'switcher') {
+          setIsModalOpen(true);
+          handleDetection(result, targetNode.id);
+        }
+
+        if (sourceNode.data.code === 'Od' && targetNode.data.code === 'Ad') {
+          if (userInput) {
+            urlToBlob(result).then((imageBlob) => {
+              triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
+            });
+          } else {
+            alert('Kindly Connect to Switcher before Anomaly Detection');
+          }
+        }
+
+        if (sourceNode.data.code === 'Od' && targetNode.type === 'outputNode') {
+          const image = sourceNode?.data.image;
+          setFinalResult(image);
+        }
+
+        if (
+          sourceNode.type === 'switcher' &&
+          targetNode.type === 'orientation'
+        ) {
+          handleDetection(result, targetNode.id);
+        }
+
+        if (sourceNode.type === 'switcher' && targetNode.data.code === 'Ad') {
+          const image = sourceNode?.data.detectedImage;
+
+          urlToBlob(image).then((imageBlob) => {
+            triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
+          });
+        }
+
+        if (sourceNode.type === 'switcher' && targetNode.data.code === 'Od') {
+          const image = sourceNode?.data.detectedImage;
+          urlToBlob(image).then((imageBlob) => {
+            if (imageBlob) {
+              triggerBackendRequest(imageBlob);
+            }
+          });
+        }
+
+        if (
+          sourceNode.type === 'switcher' &&
+          targetNode.type === 'outputNode'
+        ) {
+          const image = sourceNode?.data.detectedImage;
+          setFinalResult(image);
+        }
+
+        if (
+          sourceNode.type === 'orientation' &&
+          targetNode.type === 'switcher'
+        ) {
+          setIsModalOpen(true);
+          handleDetection(result, targetNode.id);
+        }
+
+        if (
+          sourceNode.type === 'orientation' &&
+          targetNode.type === 'outputNode'
+        ) {
+          const image = sourceNode?.data.detectedImage;
+          setFinalResult(image);
+        }
+
+        if (
+          sourceNode.type === 'orientation' &&
+          targetNode.data.code === 'Od'
+        ) {
+          const image = sourceNode?.data.detectedImage;
+          setCurrentNodeId(targetNode.id);
+          urlToBlob(image).then((imageBlob) => {
+            if (imageBlob) {
+              triggerBackendRequest(imageBlob);
+            }
+          });
+        }
+
+        if (
+          sourceNode.type === 'orientation' &&
+          targetNode.data.code === 'Ad'
+        ) {
+          if (userInput) {
+            const image = sourceNode?.data.detectedImage;
+            urlToBlob(image).then((imageBlob) => {
+              triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
+            });
+          } else {
+            alert('Kindly Connect to Switcher before Anomaly Detection');
+          }
+        }
+
+        if (sourceNode.data.code === 'Ad' && targetNode.type === 'outputNode') {
+          const image = sourceNode?.data.image;
+          setFinalResult(image);
+        }
+
+        if (
+          sourceNode.data.code === 'Ad' &&
+          targetNode.type === 'orientation'
+        ) {
+          const image = sourceNode?.data.image;
+          handleDetection(image, targetNode.id);
+        }
+
+        if (sourceNode.data.code === 'Ad' && targetNode.type === 'switcher') {
+          setIsModalOpen(true);
+          const image = sourceNode?.data.image;
+          handleDetection(image, targetNode.id);
+        }
+
+        if (sourceNode.data.code === 'Ad' && targetNode.data.code === 'Od') {
+          const image = sourceNode?.data.image;
+          setCurrentNodeId(targetNode.id);
+          urlToBlob(image).then((imageBlob) => {
+            if (imageBlob) {
+              triggerBackendRequest(imageBlob);
+            }
+          });
+        }
+
+        // if (params.source === '4' && params.target === '2') {
+        //   const n = nodes.find((node) => node.id === '2');
+        //   const video = n?.data.video;
+        //   startFrameCapture(video);
+        // }
+
+        const newEdges = [...prevEdges, newEdge];
+        updateOutputNodeEdges(newEdges); // Update edges in the output node data
+        return newEdges;
+      });
+    },
+    [
+      nodes,
+      result,
+      updateOutputNodeEdges,
+      inputImage,
+      userInput,
+      rotateImage,
+      triggerBackendAnomalyRequest,
+    ],
+  );
+
+  useEffect(() => {
+    console.log(nodes);
+  }, [nodes]);
+
+  useEffect(() => {
+    console.log('Result', result);
+  }, [result]);
+
+  // const handleProcessedFrame = (frame) => {
+  //   setNodes((nds) =>
+  //     nds.map((node) => {
+  //       if (node.id === '3') {
+  //         node.data = {
+  //           ...node.data,
+  //           processedFrames: [...node.data.processedFrames, frame],
+  //         };
+  //       }
+  //       return node;
+  //     }),
+  //   );
+  // };
+
+  // const handleVideoUpload = (video) => {
+  //   setNodes((nds) =>
+  //     nds.map((node) => {
+  //       if (node.id === '2') {
+  //         node.data = { ...node.data, video };
+  //       }
+  //       return node;
+  //     }),
+  //   );
+  // };
+
+  // const startFrameCapture = (stream) => {
+  //   const video = document.createElement('video');
+  //   video.srcObject = stream;
+  //   video.play();
+
+  //   const canvas = document.createElement('canvas');
+  //   const context = canvas.getContext('2d');
+
+  //   frameCaptureInterval.current = setInterval(() => {
+  //     context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  //     canvas.toBlob((blob) => {
+  //       triggerBackendRequestVideo(blob);
+  //     }, 'image/jpeg');
+  //   }, 100); // Capture frame every 100ms
+  // };
+
+  // const triggerBackendRequestVideo = (frame) => {
+  //   if (frame) {
+  //     const formData = new FormData();
+  //     formData.append('frame', frame);
+
+  //     axios
+  //       .post('http://localhost:5000/detectVideo', formData, {
+  //         headers: {
+  //           'Content-Type': 'multipart/form-data',
+  //         },
+  //       })
+  //       .then((response) => {
+  //         const processedFrame = response.data.processed_frame;
+  //         handleProcessedFrame(processedFrame);
+  //       })
+  //       .catch((error) => {
+  //         console.error(
+  //           'There was an error detecting objects in video!',
+  //           error,
+  //         );
+  //       });
+  //   }
+  // };
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -550,5 +643,9 @@ function Flow({ projectType }) {
     </>
   );
 }
+
+Flow.propTypes = {
+  projectType: PropTypes.string.isRequired,
+};
 
 export default Flow;
