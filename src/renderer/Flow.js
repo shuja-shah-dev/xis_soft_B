@@ -4,11 +4,13 @@
 /* eslint-disable no-use-before-define */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
+  addEdge,
   applyEdgeChanges,
   applyNodeChanges,
   Background,
   Controls,
   MiniMap,
+  useEdgesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import axios from 'axios';
@@ -17,12 +19,13 @@ import ImageInputNode from '../nodes/ImageInputNode';
 
 import Switcher from '../nodes/Switcher';
 import OrientationNode from '../nodes/OrientationNode';
-
+import CustomEdge from '../utils/customEdge';
 import OutputNode from '../nodes/OutputNode';
 import Footer from './Footer';
 import NodeSelect from '../nodes/NodeSelect';
 import ModelProvider from '../nodes/modelProvider';
 import Modal from './Modal';
+
 // import WebcamInputNode from '../nodes/WebcamNode';
 
 const nodeTypes = {
@@ -36,6 +39,10 @@ const nodeTypes = {
   nodeSelector: NodeSelect,
   modelProvider: ModelProvider,
   // VideoInput: WebcamInputNode,
+};
+
+const edgeTypes = {
+  customEdge: CustomEdge,
 };
 
 function Flow({ projectType }) {
@@ -129,7 +136,7 @@ function Flow({ projectType }) {
       },
     ];
   });
-
+  // const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [edges, setEdges] = useState([]);
   const [result, setResult] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
@@ -296,220 +303,201 @@ function Flow({ projectType }) {
 
   const onConnect = useCallback(
     (params) => {
-      setEdges((prevEdges) => {
-        const newEdge = {
-          id: params.edgeId,
-          source: params.source,
-          target: params.target,
-        };
+      const edge = {
+        ...params,
+        animated: true,
+        id: `${edges.length} + 1`,
+        type: 'customEdge',
+      };
+      setEdges((prevEdges) => addEdge(edge, prevEdges));
+      // const newEdge = {
+      //   id: params.edgeId,
+      //   animated: true,
+      //   type: 'customEdge',
+      //   source: params.source,
+      //   target: params.target,
+      // };
 
-        const targetNode = nodes.find((node) => node.id === params.target);
-        const sourceNode = nodes.find((node) => node.id === params.source);
+      const targetNode = nodes.find((node) => node.id === params.target);
+      const sourceNode = nodes.find((node) => node.id === params.source);
 
-        if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Od') {
-          setShouldTriggerRequest(true);
-          setCurrentNodeId(params.target);
-        }
+      if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Od') {
+        setShouldTriggerRequest(true);
+        setCurrentNodeId(params.target);
+      }
 
-        if (
-          sourceNode.type === 'imageInput' &&
-          targetNode.type === 'outputNode'
-        ) {
-          const imageUrl = URL.createObjectURL(inputImage);
-          setFinalResult(imageUrl);
-        }
+      if (
+        sourceNode.type === 'imageInput' &&
+        targetNode.type === 'outputNode'
+      ) {
+        const imageUrl = URL.createObjectURL(inputImage);
+        setFinalResult(imageUrl);
+      }
 
-        if (
-          sourceNode.type === 'imageInput' &&
-          targetNode.type === 'orientation'
-        ) {
-          rotateImage(inputImage, targetNode.id);
-        }
+      if (
+        sourceNode.type === 'imageInput' &&
+        targetNode.type === 'orientation'
+      ) {
+        rotateImage(inputImage, targetNode.id);
+      }
 
-        if (
-          sourceNode.type === 'imageInput' &&
-          targetNode.type === 'outputNode'
-        ) {
-          const imageUrl = URL.createObjectURL(inputImage);
-          setFinalResult(imageUrl);
-        }
+      if (
+        sourceNode.type === 'imageInput' &&
+        targetNode.type === 'outputNode'
+      ) {
+        const imageUrl = URL.createObjectURL(inputImage);
+        setFinalResult(imageUrl);
+      }
 
-        if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Ad') {
-          if (values) {
-            if (userInput) {
-              const imageUrl = URL.createObjectURL(inputImage);
-              urlToBlob(imageUrl).then((imageBlob) => {
-                triggerBackendAnomalyRequest(
-                  imageBlob,
-                  targetNode.id,
-                  userInput,
-                );
-              });
-            } else {
-              alert('Kindly Connect to Switcher before Anomaly Detection');
-            }
-          } else {
-            alert('Perform Object Detection before Anomaly Detection');
-          }
-        }
-
-        if (
-          sourceNode.type === 'imageInput' &&
-          targetNode.type === 'switcher'
-        ) {
-          setIsModalOpen(true);
-          const imageUrl = URL.createObjectURL(inputImage);
-          handleDetection(imageUrl, targetNode.id);
-        }
-
-        if (
-          sourceNode.data.code === 'Od' &&
-          targetNode.type === 'orientation'
-        ) {
-          const image = sourceNode?.data.image;
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              rotateImage(imageBlob, targetNode.id);
-            }
-          });
-        }
-
-        if (sourceNode.data.code === 'Od' && targetNode.type === 'switcher') {
-          setIsModalOpen(true);
-          handleDetection(result, targetNode.id);
-        }
-
-        if (sourceNode.data.code === 'Od' && targetNode.data.code === 'Ad') {
+      if (sourceNode.type === 'imageInput' && targetNode.data.code === 'Ad') {
+        if (values) {
           if (userInput) {
-            urlToBlob(result).then((imageBlob) => {
+            const imageUrl = URL.createObjectURL(inputImage);
+            urlToBlob(imageUrl).then((imageBlob) => {
               triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
             });
           } else {
             alert('Kindly Connect to Switcher before Anomaly Detection');
           }
+        } else {
+          alert('Perform Object Detection before Anomaly Detection');
         }
+      }
 
-        if (sourceNode.data.code === 'Od' && targetNode.type === 'outputNode') {
-          const image = sourceNode?.data.image;
-          setFinalResult(image);
+      if (sourceNode.type === 'imageInput' && targetNode.type === 'switcher') {
+        setIsModalOpen(true);
+        const imageUrl = URL.createObjectURL(inputImage);
+        handleDetection(imageUrl, targetNode.id);
+      }
+
+      if (sourceNode.data.code === 'Od' && targetNode.type === 'orientation') {
+        const image = sourceNode?.data.image;
+        urlToBlob(image).then((imageBlob) => {
+          if (imageBlob) {
+            rotateImage(imageBlob, targetNode.id);
+          }
+        });
+      }
+
+      if (sourceNode.data.code === 'Od' && targetNode.type === 'switcher') {
+        setIsModalOpen(true);
+        handleDetection(result, targetNode.id);
+      }
+
+      if (sourceNode.data.code === 'Od' && targetNode.data.code === 'Ad') {
+        if (userInput) {
+          urlToBlob(result).then((imageBlob) => {
+            triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
+          });
+        } else {
+          alert('Kindly Connect to Switcher before Anomaly Detection');
         }
+      }
 
-        if (
-          sourceNode.type === 'switcher' &&
-          targetNode.type === 'orientation'
-        ) {
-          handleDetection(result, targetNode.id);
-        }
+      if (sourceNode.data.code === 'Od' && targetNode.type === 'outputNode') {
+        const image = sourceNode?.data.image;
+        setFinalResult(image);
+      }
 
-        if (sourceNode.type === 'switcher' && targetNode.data.code === 'Ad') {
+      if (sourceNode.type === 'switcher' && targetNode.type === 'orientation') {
+        handleDetection(result, targetNode.id);
+      }
+
+      if (sourceNode.type === 'switcher' && targetNode.data.code === 'Ad') {
+        const image = sourceNode?.data.detectedImage;
+
+        urlToBlob(image).then((imageBlob) => {
+          triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
+        });
+      }
+
+      if (sourceNode.type === 'switcher' && targetNode.data.code === 'Od') {
+        const image = sourceNode?.data.detectedImage;
+        urlToBlob(image).then((imageBlob) => {
+          if (imageBlob) {
+            triggerBackendRequest(imageBlob);
+          }
+        });
+      }
+
+      if (sourceNode.type === 'switcher' && targetNode.type === 'outputNode') {
+        const image = sourceNode?.data.detectedImage;
+        setFinalResult(image);
+      }
+
+      if (sourceNode.type === 'orientation' && targetNode.type === 'switcher') {
+        setIsModalOpen(true);
+        handleDetection(result, targetNode.id);
+      }
+
+      if (
+        sourceNode.type === 'orientation' &&
+        targetNode.type === 'outputNode'
+      ) {
+        const image = sourceNode?.data.detectedImage;
+        setFinalResult(image);
+      }
+
+      if (sourceNode.type === 'orientation' && targetNode.data.code === 'Od') {
+        const image = sourceNode?.data.detectedImage;
+        setCurrentNodeId(targetNode.id);
+        urlToBlob(image).then((imageBlob) => {
+          if (imageBlob) {
+            triggerBackendRequest(imageBlob);
+          }
+        });
+      }
+
+      if (sourceNode.type === 'orientation' && targetNode.data.code === 'Ad') {
+        if (userInput) {
           const image = sourceNode?.data.detectedImage;
-
           urlToBlob(image).then((imageBlob) => {
             triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
           });
+        } else {
+          alert('Kindly Connect to Switcher before Anomaly Detection');
         }
+      }
 
-        if (sourceNode.type === 'switcher' && targetNode.data.code === 'Od') {
-          const image = sourceNode?.data.detectedImage;
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              triggerBackendRequest(imageBlob);
-            }
-          });
-        }
+      if (sourceNode.data.code === 'Ad' && targetNode.type === 'outputNode') {
+        const image = sourceNode?.data.image;
+        setFinalResult(image);
+      }
 
-        if (
-          sourceNode.type === 'switcher' &&
-          targetNode.type === 'outputNode'
-        ) {
-          const image = sourceNode?.data.detectedImage;
-          setFinalResult(image);
-        }
+      if (sourceNode.data.code === 'Ad' && targetNode.type === 'orientation') {
+        const image = sourceNode?.data.image;
+        handleDetection(image, targetNode.id);
+      }
 
-        if (
-          sourceNode.type === 'orientation' &&
-          targetNode.type === 'switcher'
-        ) {
-          setIsModalOpen(true);
-          handleDetection(result, targetNode.id);
-        }
+      if (sourceNode.data.code === 'Ad' && targetNode.type === 'switcher') {
+        setIsModalOpen(true);
+        const image = sourceNode?.data.image;
+        handleDetection(image, targetNode.id);
+      }
 
-        if (
-          sourceNode.type === 'orientation' &&
-          targetNode.type === 'outputNode'
-        ) {
-          const image = sourceNode?.data.detectedImage;
-          setFinalResult(image);
-        }
-
-        if (
-          sourceNode.type === 'orientation' &&
-          targetNode.data.code === 'Od'
-        ) {
-          const image = sourceNode?.data.detectedImage;
-          setCurrentNodeId(targetNode.id);
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              triggerBackendRequest(imageBlob);
-            }
-          });
-        }
-
-        if (
-          sourceNode.type === 'orientation' &&
-          targetNode.data.code === 'Ad'
-        ) {
-          if (userInput) {
-            const image = sourceNode?.data.detectedImage;
-            urlToBlob(image).then((imageBlob) => {
-              triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
-            });
-          } else {
-            alert('Kindly Connect to Switcher before Anomaly Detection');
+      if (sourceNode.data.code === 'Ad' && targetNode.data.code === 'Od') {
+        const image = sourceNode?.data.image;
+        setCurrentNodeId(targetNode.id);
+        urlToBlob(image).then((imageBlob) => {
+          if (imageBlob) {
+            triggerBackendRequest(imageBlob);
           }
-        }
+        });
+      }
 
-        if (sourceNode.data.code === 'Ad' && targetNode.type === 'outputNode') {
-          const image = sourceNode?.data.image;
-          setFinalResult(image);
-        }
+      // if (params.source === '4' && params.target === '2') {
+      //   const n = nodes.find((node) => node.id === '2');
+      //   const video = n?.data.video;
+      //   startFrameCapture(video);
+      // }
 
-        if (
-          sourceNode.data.code === 'Ad' &&
-          targetNode.type === 'orientation'
-        ) {
-          const image = sourceNode?.data.image;
-          handleDetection(image, targetNode.id);
-        }
-
-        if (sourceNode.data.code === 'Ad' && targetNode.type === 'switcher') {
-          setIsModalOpen(true);
-          const image = sourceNode?.data.image;
-          handleDetection(image, targetNode.id);
-        }
-
-        if (sourceNode.data.code === 'Ad' && targetNode.data.code === 'Od') {
-          const image = sourceNode?.data.image;
-          setCurrentNodeId(targetNode.id);
-          urlToBlob(image).then((imageBlob) => {
-            if (imageBlob) {
-              triggerBackendRequest(imageBlob);
-            }
-          });
-        }
-
-        // if (params.source === '4' && params.target === '2') {
-        //   const n = nodes.find((node) => node.id === '2');
-        //   const video = n?.data.video;
-        //   startFrameCapture(video);
-        // }
-
-        const newEdges = [...prevEdges, newEdge];
-        updateOutputNodeEdges(newEdges); // Update edges in the output node data
-        return newEdges;
-      });
+      //   const newEdges = [...prevEdges, newEdge];
+      //   updateOutputNodeEdges(newEdges); // Update edges in the output node data
+      //   return newEdges;
+      // });
     },
     [
+      edges,
       nodes,
       result,
       updateOutputNodeEdges,
@@ -627,6 +615,7 @@ function Flow({ projectType }) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
         >
           <Controls />
           <MiniMap />
