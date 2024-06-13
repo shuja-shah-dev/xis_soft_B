@@ -1,11 +1,15 @@
-
 import PropTypes from 'prop-types';
 import { Handle, Position } from 'reactflow';
 
 function Switcher() {
   return (
-    <div className="flex justify-center items-center text-center bg-gradient-to-br from-blue-100 to-purple-300 text-center p-4  text-black text-2xl font-semibold rounded-3xl w-52 h-52">
-      <p className=" text-purple-800">Switcher</p>
+    <div
+      style={{
+        background: 'linear-gradient(180deg, #4CCAFF 0%, #2E7999 100%)',
+      }}
+      className="flex justify-center items-center text-center  text-center p-4 border border-1 border-[#FFF] text-black text-2xl font-semibold rounded-3xl w-52 h-52"
+    >
+      <p className="">Switcher</p>
       {/* {data.detectedImage && (
         <img
           src={data.detectedImage}

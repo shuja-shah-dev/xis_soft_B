@@ -17,12 +17,16 @@ function ImageInputNode({ data }) {
   );
 
   return (
-    <div className="flex justify-center items-center text-center w-56 h-56 bg-gradient-to-br from-blue-100 to-purple-300 p-8 rounded-3xl shadow-md">
-      <div className="">
+    <div
+      style={{
+        background: ' linear-gradient(to right, #4eab56, #206d39)',
+        borderRadius: '20px',
+      }}
+      className="flex justify-center items-center text-center w-56 h-56  p-8 l shadow-md border border-1 border-[#FFF]"
+    >
+      <div className="text-2xl  text-white ">
         <label className="block text-center mb-2">
-          <span className=" bg-gradient-to-br from-blue-400 text-base to-purple-300 hover:from-blue-500 hover:to-purple-400 text-white font-bold py-2 px-4 rounded cursor-pointer">
-            Upload Image
-          </span>
+          <span className=" cursor-pointer">Upload Image</span>
           <input
             type="file"
             accept="image/*"

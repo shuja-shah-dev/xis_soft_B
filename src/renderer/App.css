@@ -1,5 +1,16 @@
 
 body {
-  background-color: aliceblue;
+  background: #000;
+  scrollbar-width: none;
+}
 
+body::-webkit-scrollbar {
+  display: none;
+
+}
+
+
+
+.right{
+  display: none;
 }

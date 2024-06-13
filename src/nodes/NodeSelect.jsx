@@ -47,7 +47,10 @@ export default function NodeSelect() {
       <div>
         <button
           type="button"
-          className="bg-gradient-to-br from-blue-400 text-xl  to-purple-300 hover:from-blue-500 hover:to-purple-400  text-white inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium  hover:bg-gray-50 "
+          style={{borderRadius: '20px',
+            background: 'linear-gradient(90deg, #876EE6 0%, #3E5FAA 100%)'}}
+
+          className=" text-lg  text-white inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white  font-medium  hover:bg-gray-50 "
           onClick={() => setMenuOpen(!menuOpen)}
         >
           ADD NODES

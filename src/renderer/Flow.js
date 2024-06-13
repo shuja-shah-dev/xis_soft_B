@@ -91,7 +91,7 @@ function Flow({ projectType }) {
       {
         id: '1',
         type: 'imageInput',
-        position: { x: 100, y: 70 },
+        position: { x: 100, y: 100 },
         data: { onImageUpload: (image) => handleImageUpload(image) },
       },
       {
@@ -603,8 +603,8 @@ function Flow({ projectType }) {
       <div
         style={{
           width: '100vw',
-          height: '480px',
-          backgroundColor: 'aliceblue',
+          height: '450px',
+          // backgroundColor: '#000',
         }}
         className="border  border-black "
       >
@@ -617,9 +617,9 @@ function Flow({ projectType }) {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
         >
-          <Controls />
-          <MiniMap />
-          <Background variant="dots" gap={12} size={1} />
+          {/* <Controls /> */}
+          {/* <MiniMap /> */}
+          {/* <Background variant="dots" gap={12} size={1} /> */}
         </ReactFlow>
       </div>
 

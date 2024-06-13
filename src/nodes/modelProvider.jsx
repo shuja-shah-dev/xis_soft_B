@@ -5,7 +5,13 @@ import { Handle, Position } from 'reactflow';
 function ModelProvider({ data: { name } }) {
   return (
     <div>
-      <div className="flex justify-center items-center text-center text-center rounded-md w-52 h-52 bg-gradient-to-br from-blue-200 to-purple-400 p-6 border border-purple-500">
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #876EE6 0%, #4B3D80 100%)',
+          borderRadius: '20px',
+        }}
+        className="flex justify-center items-center text-center text-center border border-1 border-[#FFF] w-52 h-52  p-6 "
+      >
         <h3 className="text-white text-2xl  ">{name}</h3>
       </div>
       <Handle type="target" position={Position.Left} />

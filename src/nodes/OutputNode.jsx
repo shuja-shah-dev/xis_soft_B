@@ -1,5 +1,4 @@
-
-import { Handle, Position } from "reactflow";
+import { Handle, Position } from 'reactflow';
 
 function OutputNode() {
   // const canvasRef = useRef(null);
@@ -8,7 +7,6 @@ function OutputNode() {
   //   const hasConnectionFromVideoInput = data.edges.some(
   //     (edge) => edge.source === "2" && edge.target === "3"
   // );
-
 
   // useEffect(() => {
   //   if (!hasConnectionFromVideoInput) return;
@@ -39,8 +37,14 @@ function OutputNode() {
   // }, [data.processedFrames]);
 
   return (
-    <div className="bg-gradient-to-br from-blue-100 to-purple-300 flex justify-center items-center  text-center p-4   text-2xl font-semibold rounded-3xl w-52 h-40">
-      <p className="mb-2 text-purple-800">OUTPUT</p>
+    <div
+      style={{
+        background: 'linear-gradient(135deg, #F5B03A 6.16%, #D65B27 93.1%)',
+        borderRadius: '20px',
+      }}
+      className=" flex justify-center items-center  text-center p-4  border border-1 border-[#FFF] text-2xl font-semibold  w-52 h-40"
+    >
+      <p className="mb-2 ">Output</p>
       {/* {data.detectedImage && (
         <img
           src={data.detectedImage}
