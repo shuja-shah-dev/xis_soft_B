@@ -605,22 +605,42 @@ function Flow({ projectType }) {
     setUserInput(input);
   };
 
+  const handleRemoveEdge = useCallback(
+    (id, source, target) => {
+      setEdges((prevEdges) => prevEdges.filter((edge) => edge.id !== id));
+
+
+      const targetNode = nodes.find((node) => node.id === target);
+
+      if (!targetNode) {
+        return;
+      }
+      if (targetNode.type === 'outputNode') {
+        setFinalResult(null);
+      }
+    },
+    [setEdges],
+  );
+
   return (
     <>
       <div
         style={{
           width: '100vw',
           height: '450px',
-          fontFamily: 'Gilroy'
+          fontFamily: 'Gilroy',
           // backgroundColor: '#000',
         }}
         className="border  border-black "
-
       >
         <ReactFlow
           nodes={nodes}
           onNodesChange={onNodesChange}
-          edges={edges}
+          // edges={edges}
+          edges={edges.map((edge) => ({
+            ...edge,
+            data: { ...edge.data, handleRemoveEdge },
+          }))}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
