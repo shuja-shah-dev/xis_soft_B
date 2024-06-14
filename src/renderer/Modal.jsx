@@ -18,7 +18,7 @@ function Modal({ isOpen, onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-75">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div
         style={{ backgroundColor: 'aliceblue' }}
         className=" rounded-lg shadow-lg p-6 w-full max-w-md mx-4"
@@ -40,8 +40,8 @@ function Modal({ isOpen, onClose, onSubmit }) {
         />
         <button
           onClick={handleSubmit}
-          className="w-full bg-gradient-to-br from-blue-400 to-purple-300 text-white py-2 rounded-lg hover:bg-blue-700"
-        >
+          className="w-full  text-white py-2 rounded-lg"
+        style={{    background: 'linear-gradient(90deg, #876EE6 0%, #3E5FAA 100%)'}}>
           Submit
         </button>
       </div>

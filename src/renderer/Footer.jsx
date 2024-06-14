@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 function Footer({ image }) {
   return (
-    <div className=" pb-[40px]">
+    <div className=" pb-[40px] "   style={{ fontFamily: 'Gilroy' }}>
       <div
         className="border-dashed border border-[#876EE6] w-[80%] m-auto rounded-3xl"
         style={{
@@ -13,7 +13,7 @@ function Footer({ image }) {
       >
         <h2
           className="text-center text-white text-[32px] font-semibold my-[20px]"
-          style={{ fontFamily: 'Gilroy' }}
+
         >
           Connect the Nodes to Get your Results
         </h2>

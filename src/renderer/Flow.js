@@ -16,7 +16,7 @@ import 'reactflow/dist/style.css';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import ImageInputNode from '../nodes/ImageInputNode';
-
+import Alert from '../utils/alert';
 import Switcher from '../nodes/Switcher';
 import OrientationNode from '../nodes/OrientationNode';
 import CustomEdge from '../utils/customEdge';
@@ -137,6 +137,8 @@ function Flow({ projectType }) {
     ];
   });
   // const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
   const [edges, setEdges] = useState([]);
   const [result, setResult] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
@@ -185,6 +187,11 @@ function Flow({ projectType }) {
 
   const handleImageUpload = (image) => {
     setInputImage(image);
+  };
+
+  const handleShowAlert = (message) => {
+    setAlertMessage(message);
+    setShowAlert(true);
   };
 
   const triggerBackendRequest = (image) => {
@@ -357,10 +364,10 @@ function Flow({ projectType }) {
               triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
             });
           } else {
-            alert('Kindly Connect to Switcher before Anomaly Detection');
+            handleShowAlert('Connect to Switcher prior Anomaly Detection');
           }
         } else {
-          alert('Perform Object Detection before Anomaly Detection');
+          handleShowAlert('Perform Object Detection before Anomaly Detection');
         }
       }
 
@@ -390,7 +397,7 @@ function Flow({ projectType }) {
             triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
           });
         } else {
-          alert('Kindly Connect to Switcher before Anomaly Detection');
+          handleShowAlert('Connect to Switcher prior Anomaly Detection');
         }
       }
 
@@ -455,7 +462,7 @@ function Flow({ projectType }) {
             triggerBackendAnomalyRequest(imageBlob, targetNode.id, userInput);
           });
         } else {
-          alert('Kindly Connect to Switcher before Anomaly Detection');
+          handleShowAlert('Connect to Switcher prior Anomaly Detection');
         }
       }
 
@@ -604,9 +611,11 @@ function Flow({ projectType }) {
         style={{
           width: '100vw',
           height: '450px',
+          fontFamily: 'Gilroy'
           // backgroundColor: '#000',
         }}
         className="border  border-black "
+
       >
         <ReactFlow
           nodes={nodes}
@@ -629,6 +638,9 @@ function Flow({ projectType }) {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
       />
+      {showAlert && (
+        <Alert message={alertMessage} onClose={() => setShowAlert(false)} />
+      )}
     </>
   );
 }
