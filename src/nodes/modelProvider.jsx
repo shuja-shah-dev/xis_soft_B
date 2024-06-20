@@ -10,7 +10,7 @@ function ModelProvider({ data: { name } }) {
           background: 'linear-gradient(180deg, #876EE6 0%, #4B3D80 100%)',
           borderRadius: '20px',
         }}
-        className="flex justify-center items-center text-center text-center border border-1 border-[#FFF] w-52 h-52  p-6 "
+        className="flex justify-center items-center text-center border border-1 border-[#FFF] w-52 h-52  p-6 "
       >
         <h3 className="text-white text-2xl  ">{name}</h3>
       </div>
@@ -23,9 +23,11 @@ function ModelProvider({ data: { name } }) {
 ModelProvider.propTypes = {
   data: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    image: PropTypes.instanceOf(File),
+    image: PropTypes.oneOfType([
+      PropTypes.instanceOf(File), // Accepts a File object
+      PropTypes.string,
+    ]),
   }).isRequired,
-  id: PropTypes.string.isRequired,
 };
 
 export default ModelProvider;

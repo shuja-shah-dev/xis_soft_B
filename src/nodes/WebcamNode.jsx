@@ -1,10 +1,9 @@
-import { useRef, useEffect, useState } from "react";
-import PropTypes from "prop-types";
-import { Handle, Position } from "reactflow";
+import { useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { Handle, Position } from 'reactflow';
 
-const WebcamInputNode = ({ data }) => {
+function WebcamInputNode({ data }) {
   const videoRef = useRef(null);
-  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     let stream;
@@ -19,49 +18,33 @@ const WebcamInputNode = ({ data }) => {
           data.onVideoUpload(stream);
         }
       } catch (error) {
-        console.error("Error accessing webcam:", error);
+        console.error('Error accessing webcam:', error);
       }
     };
 
-    if (showVideo) {
-      initializeWebcam();
-    }
+    initializeWebcam();
 
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [data, showVideo]);
-
-  const handleStartClick = () => {
-    setShowVideo(true);
-  };
-
-  const handleVideoClick = () => {
-    setShowVideo((prevShowVideo) => !prevShowVideo);
-  };
+  }, [data]);
 
   return (
-    <div className="w-[400px] bg-gradient-to-br from-blue-100 to-purple-200 p-6 rounded-3xl">
+    <div className="  p-6 rounded-3xl border border-1 border-[#FFF]"   style={{
+      background: 'linear-gradient(180deg, #4CCAFF 0%, #2E7999 100%)',
+    }}>
       <h3 className="mb-2 text-black text-2xl font-semibold text-center">
         Webcam
       </h3>
-      <div className="flex justify-center" onClick={handleStartClick}>
-        <button className=" bg-gradient-to-br from-blue-400 to-purple-300 text-white font-bold py-2 px-4 rounded mb-2">
-          Start
-        </button>
+      <div style={{width: '220px'}}>
+        <video ref={videoRef} autoPlay playsInline />
       </div>
-
-      {showVideo && (
-        <div onClick={handleVideoClick}>
-          <video ref={videoRef} autoPlay playsInline />
-        </div>
-      )}
       <Handle type="source" position={Position.Right} />
     </div>
   );
-};
+}
 
 WebcamInputNode.propTypes = {
   data: PropTypes.shape({

@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import 'reactflow/dist/style.css';
 import Theme from '../utils/theme';
 import Landing from './Landing';
+import { ContextProvider } from '../utils/MyContext';
 
 function App() {
   const [parentProjectType, setParentProjectType] = useState(null);
@@ -15,6 +16,7 @@ function App() {
   };
 
   return (
+    <ContextProvider>
     <Router>
       <Theme />
       <Routes>
@@ -28,6 +30,7 @@ function App() {
         />
       </Routes>
     </Router>
+    </ContextProvider>
   );
 }
 

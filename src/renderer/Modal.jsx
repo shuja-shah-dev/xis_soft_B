@@ -6,7 +6,7 @@ function Modal({ isOpen, onClose, onSubmit }) {
   const [inputValue, setInputValue] = useState('');
 
   if (!isOpen) return null;
-  console.log('Modal is open');
+
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);

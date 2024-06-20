@@ -25,8 +25,9 @@ import Footer from './Footer';
 import NodeSelect from '../nodes/NodeSelect';
 import ModelProvider from '../nodes/modelProvider';
 import Modal from './Modal';
+import { useMyContext } from '../utils/MyContext';
 
-// import WebcamInputNode from '../nodes/WebcamNode';
+import WebcamInputNode from '../nodes/WebcamNode';
 
 const nodeTypes = {
   imageInput: ImageInputNode,
@@ -38,7 +39,7 @@ const nodeTypes = {
   outputNode: OutputNode,
   nodeSelector: NodeSelect,
   modelProvider: ModelProvider,
-  // VideoInput: WebcamInputNode,
+  VideoInput: WebcamInputNode,
 };
 
 const edgeTypes = {
@@ -79,6 +80,12 @@ function Flow({ projectType }) {
           position: { x: 100, y: 70 },
           data: { onImageUpload: (image) => handleImageUpload(image) },
         },
+        // {
+        //   id: 'd',
+        //   type: 'VideoInput',
+        //   position: { x: 500, y: 150 },
+        //   data: { onVideoUpload: (video) => handleVideoUpload(video) },
+        // },
         {
           id: 'c',
           type: 'outputNode',
@@ -136,7 +143,7 @@ function Flow({ projectType }) {
       },
     ];
   });
-  // const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [edges, setEdges] = useState([]);
@@ -149,17 +156,9 @@ function Flow({ projectType }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userInput, setUserInput] = useState('');
   const frameCaptureInterval = useRef(null);
-
-  const updateOutputNodeEdges = useCallback((newEdges) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === '3') {
-          node.data = { ...node.data, edges: newEdges }; // Pass edges to the output node data
-        }
-        return node;
-      }),
-    );
-  }, []);
+  const { videoStream, setVideoStream } = useMyContext();
+  const [processedFrames, setProcessedFrames] = useState([]);
+  const [flag, setFlag] = useState(false);
 
   function urlToBlob(url) {
     return fetch(url)
@@ -196,7 +195,7 @@ function Flow({ projectType }) {
 
   const triggerBackendRequest = (image) => {
     if (image) {
-      console.log(image);
+      console.log('Perfroming');
       const formData = new FormData();
       formData.append('image', image);
 
@@ -223,7 +222,7 @@ function Flow({ projectType }) {
               return node;
             }),
           );
-          console.log('done');
+          console.log('Object Detection Performed');
         })
         .catch((error) => {
           console.error('There was an error detecting objects!', error);
@@ -249,7 +248,7 @@ function Flow({ projectType }) {
           const rotatedImageUrl = URL.createObjectURL(rotatedImageBlob);
 
           setResult(rotatedImageUrl);
-          console.log('orientation fixed');
+          console.log('Orientation Fixed');
           setNodes((nds) =>
             nds.map((node) => {
               if (node.id === nodeId) {
@@ -267,7 +266,7 @@ function Flow({ projectType }) {
 
   const triggerBackendAnomalyRequest = (imageBlob, nodeId, label) => {
     if (imageBlob) {
-      console.log(imageBlob);
+      console.log('Performing');
       const formData = new FormData();
       formData.append('image', imageBlob);
       formData.append('values', values);
@@ -284,7 +283,7 @@ function Flow({ projectType }) {
             'image/jpeg',
           );
           const detectedImageUrl = URL.createObjectURL(detectedImageBlob);
-          console.log('done2');
+          console.log('Anomaly Detection Perfromed');
 
           setNodes((nds) =>
             nds.map((node) => {
@@ -404,6 +403,7 @@ function Flow({ projectType }) {
       if (sourceNode.data.code === 'Od' && targetNode.type === 'outputNode') {
         const image = sourceNode?.data.image;
         setFinalResult(image);
+        setFlag(true);
       }
 
       if (sourceNode.type === 'switcher' && targetNode.type === 'orientation') {
@@ -492,11 +492,9 @@ function Flow({ projectType }) {
         });
       }
 
-      // if (params.source === '4' && params.target === '2') {
-      //   const n = nodes.find((node) => node.id === '2');
-      //   const video = n?.data.video;
-      //   startFrameCapture(video);
-      // }
+      if (sourceNode.data.code === 'Vi' && targetNode.data.code === 'Od') {
+        startFrameCapture(videoStream);
+      }
 
       //   const newEdges = [...prevEdges, newEdge];
       //   updateOutputNodeEdges(newEdges); // Update edges in the output node data
@@ -507,7 +505,6 @@ function Flow({ projectType }) {
       edges,
       nodes,
       result,
-      updateOutputNodeEdges,
       inputImage,
       userInput,
       rotateImage,
@@ -515,100 +512,95 @@ function Flow({ projectType }) {
     ],
   );
 
-  useEffect(() => {
-    console.log(nodes);
-  }, [nodes]);
+  // useEffect(() => {
+  //   console.log(nodes);
+  // }, [nodes]);
 
-  useEffect(() => {
-    console.log('Result', result);
-  }, [result]);
+  const handleProcessedFrame = (frame) => {
+    setProcessedFrames((prev) => [...prev, frame]);
+  };
 
-  // const handleProcessedFrame = (frame) => {
-  //   setNodes((nds) =>
-  //     nds.map((node) => {
-  //       if (node.id === '3') {
-  //         node.data = {
-  //           ...node.data,
-  //           processedFrames: [...node.data.processedFrames, frame],
-  //         };
-  //       }
-  //       return node;
-  //     }),
-  //   );
-  // };
+  const startFrameCapture = (stream) => {
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.play();
 
-  // const handleVideoUpload = (video) => {
-  //   setNodes((nds) =>
-  //     nds.map((node) => {
-  //       if (node.id === '2') {
-  //         node.data = { ...node.data, video };
-  //       }
-  //       return node;
-  //     }),
-  //   );
-  // };
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
-  // const startFrameCapture = (stream) => {
-  //   const video = document.createElement('video');
-  //   video.srcObject = stream;
-  //   video.play();
+    frameCaptureInterval.current = setInterval(() => {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        triggerBackendRequestVideo(blob);
+      }, 'image/jpeg');
+    }, 100); // Capture frame every 100ms
+  };
 
-  //   const canvas = document.createElement('canvas');
-  //   const context = canvas.getContext('2d');
+  // const abortController = useRef(new AbortController());
 
-  //   frameCaptureInterval.current = setInterval(() => {
-  //     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  //     canvas.toBlob((blob) => {
-  //       triggerBackendRequestVideo(blob);
-  //     }, 'image/jpeg');
-  //   }, 100); // Capture frame every 100ms
-  // };
+  const triggerBackendRequestVideo = (frame) => {
+    if (frame) {
+      const formData = new FormData();
+      formData.append('frame', frame);
 
-  // const triggerBackendRequestVideo = (frame) => {
-  //   if (frame) {
-  //     const formData = new FormData();
-  //     formData.append('frame', frame);
+      axios
+        .post('http://localhost:5000/detectVideo', formData, {
 
-  //     axios
-  //       .post('http://localhost:5000/detectVideo', formData, {
-  //         headers: {
-  //           'Content-Type': 'multipart/form-data',
-  //         },
-  //       })
-  //       .then((response) => {
-  //         const processedFrame = response.data.processed_frame;
-  //         handleProcessedFrame(processedFrame);
-  //       })
-  //       .catch((error) => {
-  //         console.error(
-  //           'There was an error detecting objects in video!',
-  //           error,
-  //         );
-  //       });
-  //   }
-  // };
+
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        .then((response) => {
+          const processedFrame = response.data.processed_frame;
+          handleProcessedFrame(processedFrame);
+        })
+        .catch((error) => {
+          if (axios.isCancel(error)) {
+            console.log('Request canceled:', error.message);
+          } else {
+            console.error(
+              'There was an error detecting objects in video!',
+              error,
+            );
+          }
+        });
+    }
+  };
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [],
   );
 
-  const onEdgesChange = useCallback(
-    (changes) => {
-      setEdges((eds) => applyEdgeChanges(changes, eds));
-      updateOutputNodeEdges();
-    },
-    [updateOutputNodeEdges],
-  );
+  const onEdgesChange = useCallback((changes) => {
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  });
 
   const handleModalSubmit = (input) => {
     setUserInput(input);
   };
 
+  const frameCaptureStop = () => {
+    if (frameCaptureInterval.current) {
+      clearInterval(frameCaptureInterval.current);
+      frameCaptureInterval.current = null;
+    }
+    // abortController.current.abort();
+    // abortController.current = new AbortController(); // Reset the AbortController for next use
+    // setVideoStream(null);
+  };
+
+  useEffect(() => {
+    // Clean up on unmount
+    return () => {
+      frameCaptureStop();
+    };
+  }, []);
+
   const handleRemoveEdge = useCallback(
     (id, source, target) => {
       setEdges((prevEdges) => prevEdges.filter((edge) => edge.id !== id));
-
 
       const targetNode = nodes.find((node) => node.id === target);
 
@@ -617,6 +609,12 @@ function Flow({ projectType }) {
       }
       if (targetNode.type === 'outputNode') {
         setFinalResult(null);
+        frameCaptureStop();
+        setFlag(false);
+      }
+      if (targetNode.data.code === 'Od'){
+        frameCaptureStop();
+        setFlag(false);
       }
     },
     [setEdges],
@@ -652,7 +650,7 @@ function Flow({ projectType }) {
         </ReactFlow>
       </div>
 
-      <Footer image={finalResult} />
+      <Footer image={finalResult} frames={flag ? processedFrames : []} />
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -666,7 +664,7 @@ function Flow({ projectType }) {
 }
 
 Flow.propTypes = {
-  projectType: PropTypes.string.isRequired,
+  projectType: PropTypes.number,
 };
 
 export default Flow;
