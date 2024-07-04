@@ -3,33 +3,33 @@ import PropTypes from 'prop-types';
 import { Handle, Position } from 'reactflow';
 
 function WebcamInputNode({ data }) {
-  const videoRef = useRef(null);
+  // const videoRef = useRef(null);
 
-  useEffect(() => {
-    let stream;
+  // useEffect(() => {
+  //   let stream;
 
-    const initializeWebcam = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          data.onVideoUpload(stream);
-        }
-      } catch (error) {
-        console.error('Error accessing webcam:', error);
-      }
-    };
+  //   const initializeWebcam = async () => {
+  //     try {
+  //       stream = await navigator.mediaDevices.getUserMedia({
+  //         video: true,
+  //       });
+  //       if (videoRef.current) {
+  //         videoRef.current.srcObject = stream;
+  //         data.onVideoUpload(stream);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error accessing webcam:', error);
+  //     }
+  //   };
 
-    initializeWebcam();
+  //   initializeWebcam();
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [data]);
+  //   return () => {
+  //     if (stream) {
+  //       stream.getTracks().forEach((track) => track.stop());
+  //     }
+  //   };
+  // }, [data]);
 
   return (
     <div className="  p-6 rounded-3xl border border-1 border-[#FFF]"   style={{
@@ -39,7 +39,7 @@ function WebcamInputNode({ data }) {
         Webcam
       </h3>
       <div style={{width: '220px'}}>
-        <video ref={videoRef} autoPlay playsInline />
+        {/* <video ref={videoRef} autoPlay playsInline /> */}
       </div>
       <Handle type="source" position={Position.Right} />
     </div>

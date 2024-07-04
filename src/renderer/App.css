@@ -9,6 +9,12 @@ body::-webkit-scrollbar {
 
 }
 
+@font-face {
+  font-family: 'Gilroy';
+  src: url('../../assets/Gilroy-Light.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 
 .right{

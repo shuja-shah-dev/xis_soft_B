@@ -1,7 +1,7 @@
 import base64
 import cv2
 import numpy as np
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from PIL import Image
 import io
@@ -13,9 +13,14 @@ from argparse import Namespace
 from torch_inference import infer
 from keras.models import load_model
 from scipy.ndimage import rotate as scipy_rotate
+# from yoloseg import YOLOSeg
 
 app = Flask(__name__)
 CORS(app, origins=['*'])
+
+# Initialize YOLOv5 Instance Segmentator
+# model_path = "models/yolov8m-seg.onnx"
+# yoloseg = YOLOSeg(model_path, conf_thres=0.3, iou_thres=0.3)
 
 model2 = YOLO('./yolov8n.pt')
 
@@ -210,6 +215,63 @@ def detect_objects():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+def webcam_yolo():
+    camera = cv2.VideoCapture(0)
+    model = YOLO('yolov8n.pt')
+     # 0 represents the default webcam
+    while True:
+        ret, frame = camera.read()
+        if not ret:
+            break
+        results = model(frame)
+        # Process the frame with YOLO
+        annotated_frame = results[0].plot()
+
+        cv2.imshow("Detected Objects", annotated_frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+        # # Encode the annotated frame as JPEG
+        # _, buffer = cv2.imencode('.jpg', annotated_frame)
+
+        # # Send the frame as a multipart response
+        # yield (b'--frame\r\n'
+        #        b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    camera.release()
+    cv2.destroyAllWindows()
+
+# @app.route('/yolo_feed')
+# def yolo_feed():
+#     return Response(webcam_yolo(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+# def generate_frames():
+#     cap = cv2.VideoCapture(0)
+
+#     while cap.isOpened():
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+
+#         boxes, scores, class_ids, masks = yoloseg(frame)
+#         combined_img = yoloseg.draw_masks(frame)
+
+#         # Display the image in a new window
+#         cv2.imshow("Detected Objects", combined_img)
+
+#         if cv2.waitKey(1) & 0xFF == ord('q'):
+#             break
+
+#     cap.release()
+#     cv2.destroyAllWindows()
+
+@app.route('/video_feed')
+def video_feed():
+    # Call the function to start displaying frames
+    webcam_yolo()
+    return "Video feed started."
 
 if __name__ == '__main__':
     app.run(debug=True)

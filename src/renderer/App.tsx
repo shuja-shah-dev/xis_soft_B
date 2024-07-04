@@ -7,6 +7,7 @@ import 'reactflow/dist/style.css';
 import Theme from '../utils/theme';
 import Landing from './Landing';
 import { ContextProvider } from '../utils/MyContext';
+import Sequences from './Sequences';
 
 function App() {
   const [parentProjectType, setParentProjectType] = useState(null);
@@ -17,19 +18,21 @@ function App() {
 
   return (
     <ContextProvider>
-    <Router>
-      <Theme />
-      <Routes>
-        <Route
-          path="/"
-          element={<Landing onProjectTypeChange={handleProjectTypeChange} />}
-        />
-        <Route
-          path="/flow"
-          element={<Flow projectType={parentProjectType} />}
-        />
-      </Routes>
-    </Router>
+      <Router>
+        <Theme />
+        <Routes>
+          <Route
+            path="/"
+            element={<Landing onProjectTypeChange={handleProjectTypeChange} />}
+          />
+          <Route
+            path="/flow"
+            element={<Flow projectType={parentProjectType} />}
+          />
+
+          {/* <Route path="/seq" element={<Sequences />} /> */}
+        </Routes>
+      </Router>
     </ContextProvider>
   );
 }

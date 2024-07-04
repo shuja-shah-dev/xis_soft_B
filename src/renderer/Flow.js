@@ -307,6 +307,24 @@ function Flow({ projectType }) {
     }
   }, [shouldTriggerRequest, inputImage, triggerBackendRequest]);
 
+  function openVideoFeedWindow() {
+    const videoFeedWindow = window.open(
+      'http://localhost:5000/yolo_feed',
+      'Yolo Feed',
+      'width=640,height=480',
+    );
+    if (videoFeedWindow) {
+      videoFeedWindow.onbeforeunload = () => {
+        console.log('Video feed window closed');
+        // Handle cleanup or any necessary actions when the window is closed
+      };
+    } else {
+      alert(
+        'Failed to open video feed window. Please check popup blocker settings.',
+      );
+    }
+  }
+
   const onConnect = useCallback(
     (params) => {
       const edge = {
@@ -493,7 +511,19 @@ function Flow({ projectType }) {
       }
 
       if (sourceNode.data.code === 'Vi' && targetNode.data.code === 'Od') {
-        startFrameCapture(videoStream);
+        // startFrameCapture(videoStream);
+        axios
+          .get('http://localhost:5000/video_feed')
+          .then((response) => {
+            // Handle success, if needed
+            console.log('Video feed started:', response.data);
+          })
+          .catch((error) => {
+            // Handle error, if needed
+            console.error('Error starting video feed:', error);
+          });
+
+        // openVideoFeedWindow();
       }
 
       //   const newEdges = [...prevEdges, newEdge];
@@ -545,8 +575,6 @@ function Flow({ projectType }) {
 
       axios
         .post('http://localhost:5000/detectVideo', formData, {
-
-
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -612,7 +640,7 @@ function Flow({ projectType }) {
         frameCaptureStop();
         setFlag(false);
       }
-      if (targetNode.data.code === 'Od'){
+      if (targetNode.data.code === 'Od') {
         frameCaptureStop();
         setFlag(false);
       }
