@@ -31,7 +31,7 @@ export default function Landing({ onProjectTypeChange }) {
         </Link>
         <Link
           to="/flow"
-          onClick={() => handleSelection(0)}
+          onClick={() => handleSelection(2)}
           className=" text-white py-2 px-5  text-lg"
           style={{
             borderRadius: '20px',
@@ -41,17 +41,17 @@ export default function Landing({ onProjectTypeChange }) {
           Use PreMade Nodes
         </Link>
 
-        {/* <Link
-          to="/seq"
-
+        <Link
+          to="/flow"
+          onClick={() => handleSelection(3)}
           className=" text-white py-2 px-5  text-lg"
           style={{
             borderRadius: '20px',
             background: 'linear-gradient(90deg, #876EE6 0%, #3E5FAA 100%)',
           }}
         >
-         Make Sequences
-        </Link> */}
+         Saved Sequences
+        </Link>
       </div>
     </div>
     </div>

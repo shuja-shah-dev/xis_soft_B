@@ -28,6 +28,9 @@ import Modal from './Modal';
 import { useMyContext } from '../utils/MyContext';
 
 import WebcamInputNode from '../nodes/WebcamNode';
+import SequenceDropdown from '../utils/SequenceDropdown';
+import SequenceInput from '../utils/sequenceInput';
+import Loader from '../utils/Loader';
 
 const nodeTypes = {
   imageInput: ImageInputNode,
@@ -94,54 +97,56 @@ function Flow({ projectType }) {
         },
       ];
     }
-    return [
-      {
-        id: '1',
-        type: 'imageInput',
-        position: { x: 100, y: 100 },
-        data: { onImageUpload: (image) => handleImageUpload(image) },
-      },
-      {
-        id: '2',
-        type: 'modelProvider',
-        position: { x: 700, y: 100 },
-        data: {
-          image: null,
-          name: 'Detection',
-          code: 'Od',
+    if (projectType == 2) {
+      return [
+        {
+          id: '1',
+          type: 'imageInput',
+          position: { x: 100, y: 100 },
+          data: { onImageUpload: (image) => handleImageUpload(image) },
         },
-      },
-
-      {
-        id: '3',
-        type: 'orientation',
-        position: { x: 1200, y: 130 },
-
-        data: { detectedImage: null },
-      },
-      {
-        id: '4',
-        type: 'switcher',
-        position: { x: 1700, y: 100 },
-        data: { detectedImage: null },
-      },
-      {
-        id: '5',
-        type: 'modelProvider',
-        position: { x: 2200, y: 100 },
-        data: {
-          image: null,
-          name: 'Anomaly Detection',
-          code: 'Ad',
+        {
+          id: '2',
+          type: 'modelProvider',
+          position: { x: 700, y: 100 },
+          data: {
+            image: null,
+            name: 'Detection',
+            code: 'Od',
+          },
         },
-      },
-      {
-        id: '6',
-        type: 'outputNode',
-        position: { x: 2700, y: 115 },
-        data: { detectedImage: null },
-      },
-    ];
+
+        {
+          id: '3',
+          type: 'orientation',
+          position: { x: 1200, y: 130 },
+
+          data: { detectedImage: null },
+        },
+        {
+          id: '4',
+          type: 'switcher',
+          position: { x: 1700, y: 100 },
+          data: { detectedImage: null },
+        },
+        {
+          id: '5',
+          type: 'modelProvider',
+          position: { x: 2200, y: 100 },
+          data: {
+            image: null,
+            name: 'Anomaly Detection',
+            code: 'Ad',
+          },
+        },
+        {
+          id: '6',
+          type: 'outputNode',
+          position: { x: 2700, y: 115 },
+          data: { detectedImage: null },
+        },
+      ];
+    }
   });
 
   const [showAlert, setShowAlert] = useState(false);
@@ -159,6 +164,9 @@ function Flow({ projectType }) {
   const { videoStream, setVideoStream } = useMyContext();
   const [processedFrames, setProcessedFrames] = useState([]);
   const [flag, setFlag] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sequences, setSequences] = useState([]);
+  const [sequenceName, setSequenceName] = useState('');
 
   function urlToBlob(url) {
     return fetch(url)
@@ -193,12 +201,13 @@ function Flow({ projectType }) {
     setShowAlert(true);
   };
 
+
   const triggerBackendRequest = (image) => {
     if (image) {
       console.log('Perfroming');
       const formData = new FormData();
       formData.append('image', image);
-
+      setLoading(true);
       axios
         .post('http://localhost:5000/detect', formData, {
           headers: {
@@ -223,6 +232,7 @@ function Flow({ projectType }) {
             }),
           );
           console.log('Object Detection Performed');
+          setLoading(false);
         })
         .catch((error) => {
           console.error('There was an error detecting objects!', error);
@@ -232,6 +242,7 @@ function Flow({ projectType }) {
 
   const rotateImage = (imageBlob, nodeId) => {
     if (imageBlob) {
+      setLoading(true);
       const formData = new FormData();
       formData.append('image', imageBlob, 'image.jpg');
       axios
@@ -249,6 +260,7 @@ function Flow({ projectType }) {
 
           setResult(rotatedImageUrl);
           console.log('Orientation Fixed');
+          setLoading(false);
           setNodes((nds) =>
             nds.map((node) => {
               if (node.id === nodeId) {
@@ -266,6 +278,7 @@ function Flow({ projectType }) {
 
   const triggerBackendAnomalyRequest = (imageBlob, nodeId, label) => {
     if (imageBlob) {
+      setLoading(true);
       console.log('Performing');
       const formData = new FormData();
       formData.append('image', imageBlob);
@@ -284,7 +297,7 @@ function Flow({ projectType }) {
           );
           const detectedImageUrl = URL.createObjectURL(detectedImageBlob);
           console.log('Anomaly Detection Perfromed');
-
+          setLoading(false);
           setNodes((nds) =>
             nds.map((node) => {
               if (node.id === nodeId) {
@@ -390,8 +403,10 @@ function Flow({ projectType }) {
 
       if (sourceNode.type === 'imageInput' && targetNode.type === 'switcher') {
         setIsModalOpen(true);
-        const imageUrl = URL.createObjectURL(inputImage);
-        handleDetection(imageUrl, targetNode.id);
+        if (inputImage) {
+          const imageUrl = URL.createObjectURL(inputImage);
+          handleDetection(imageUrl, targetNode.id);
+        }
       }
 
       if (sourceNode.data.code === 'Od' && targetNode.type === 'orientation') {
@@ -512,11 +527,13 @@ function Flow({ projectType }) {
 
       if (sourceNode.data.code === 'Vi' && targetNode.data.code === 'Od') {
         // startFrameCapture(videoStream);
+        setLoading(true);
         axios
           .get('http://localhost:5000/video_feed')
           .then((response) => {
             // Handle success, if needed
-            console.log('Video feed started:', response.data);
+            console.log(response.data);
+            setLoading(false);
           })
           .catch((error) => {
             // Handle error, if needed
@@ -648,6 +665,43 @@ function Flow({ projectType }) {
     [setEdges],
   );
 
+  useEffect(() => {
+    const savedSequences = JSON.parse(localStorage.getItem('sequences')) || [];
+    setSequences(savedSequences);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('sequences', JSON.stringify(sequences));
+  }, [sequences]);
+
+  const handleSaveSequence = () => {
+    const filteredNodes = nodes.filter((node) => node.id !== 'a');
+    const sequenceData = {
+      name: sequenceName || 'Unnamed',
+      nodes: filteredNodes.map((node) => ({
+        id: node.id,
+        position: node.position,
+        type: node.type,
+        data: node.data,
+      })),
+    };
+
+    setSequences([...sequences, sequenceData]);
+    setSequenceName('');
+    handleShowAlert('Saved Successfully');
+  };
+
+  const handleDeleteSequence = (index) => {
+    const updatedSequences = [...sequences];
+    updatedSequences.splice(index, 1);
+    setSequences(updatedSequences);
+    setNodes([]);
+  };
+
+  const loadSequence = (sequenceData) => {
+    setNodes(sequenceData.nodes);
+  };
+
   return (
     <>
       <div
@@ -655,9 +709,7 @@ function Flow({ projectType }) {
           width: '100vw',
           height: '450px',
           fontFamily: 'Gilroy',
-          // backgroundColor: '#000',
         }}
-        className="border  border-black "
       >
         <ReactFlow
           nodes={nodes}
@@ -677,13 +729,29 @@ function Flow({ projectType }) {
           {/* <Background variant="dots" gap={12} size={1} /> */}
         </ReactFlow>
       </div>
-
+      <div className="">
+        {projectType === 1 && (
+          <SequenceInput
+            sequenceName={sequenceName}
+            setSequenceName={setSequenceName}
+            handleSaveSequence={handleSaveSequence}
+          />
+        )}
+        {projectType === 3 && (
+          <SequenceDropdown
+            sequences={sequences}
+            loadSequence={loadSequence}
+            handleDeleteSequence={handleDeleteSequence}
+          />
+        )}
+      </div>
       <Footer image={finalResult} frames={flag ? processedFrames : []} />
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
       />
+      {loading && <Loader />}
       {showAlert && (
         <Alert message={alertMessage} onClose={() => setShowAlert(false)} />
       )}
